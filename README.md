@@ -1,4 +1,6 @@
-omegle-to-irc
+Omegle to IRC
 =============
 
-An irc bot that allows communication with strangers on Omegle.
+This is an irc bot that allows communication with strangers on Omegle.
+
+I made it to get acquainted with Twisted.
