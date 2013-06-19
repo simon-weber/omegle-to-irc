@@ -1,5 +1,4 @@
 import functools
-import sys
 
 from twisted.internet import protocol, reactor
 from twisted.words.protocols import irc
@@ -16,6 +15,7 @@ def trace(func):
 
 
 bridge_bot_dispatch = {}  # eg {'/command': command_func}
+
 
 def command(f):
     @functools.wraps(f)
@@ -34,7 +34,7 @@ class BridgeBotProtocol(irc.IRCClient):
     #   omegle_bot
 
     idle = False  # hack to force idle on init connect
-    piping_to = None
+    piping_user = None
 
     @command
     def connect(self, *args):
@@ -65,14 +65,16 @@ class BridgeBotProtocol(irc.IRCClient):
     @command
     def pipe(self, *args):
         if len(args) > 0:
-            self.piping_to = args[0]
-            print "Piping to %s." % self.piping_to
+            self.piping_user = args[0]
+            print "Piping to %r." % self.piping_user
+            self.say(self.factory.channel, "<piping to %r>" % self.piping_user)
         else:
             self.say(self.factory.channel, 'Usage: /pipe <nick>')
 
     @command
     def unpipe(self, *args):
-        self.piping_to = None
+        self.say(self.factory.channel, "<no longer piping to %r>" % self.piping_user)
+        self.piping_user = None
 
     def goIdle(self):
         if not self.idle:
@@ -95,12 +97,15 @@ class BridgeBotProtocol(irc.IRCClient):
         self.goIdle()
 
     def privmsg(self, user, channel, msg):
+        user = user.split('!')[0]
+
+        if self.piping_user == user and not self.idle:
+            print "-> '%s'" % msg.strip()
+            self.omegle_bot.say(msg.strip())
+            return
+
         try:
-            if self.piping_to:
-                to = self.nickname
-                msg_rest = msg.strip()
-            else:
-                to, msg_rest = [s.strip() for s in msg.split(':')]
+            to, msg_rest = [s.strip() for s in msg.split(':')]
         except ValueError:
             return  # no colon
         else:
@@ -108,7 +113,7 @@ class BridgeBotProtocol(irc.IRCClient):
                 return
 
         # someone directed a msg at us; need to respond
-        print 'responding: %r' % msg
+        print "<- '%s'" % msg
 
         msg_split = msg_rest.split()
         command_name, args = msg_split[0], msg_split[1:]
@@ -117,6 +122,7 @@ class BridgeBotProtocol(irc.IRCClient):
         if command:
             command(self, *args)
         elif not self.idle:
+            print "-> '%s'" % msg_rest
             self.omegle_bot.say(msg_rest)
 
     @trace
@@ -135,8 +141,8 @@ class BridgeBotProtocol(irc.IRCClient):
     @trace
     def messageCallback(self, *args):
         msg = args[1][0].encode('utf-8')
-        if self.piping_to:
-            msg = self.piping_to + ': ' + msg
+        if self.piping_user:
+            msg = self.piping_user + ': ' + msg
         self.say(self.factory.channel, msg)
 
     @trace
@@ -164,7 +170,7 @@ class BridgeBotProtocol(irc.IRCClient):
 class BridgeBotFactory(protocol.ClientFactory):
     protocol = BridgeBotProtocol
 
-    def __init__(self, channel, nickname='omeglebot'):
+    def __init__(self, channel, nickname='dev_omgb'):
         self.channel = channel
         self.nickname = nickname
 
