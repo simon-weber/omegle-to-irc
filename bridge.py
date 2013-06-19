@@ -185,7 +185,7 @@ class BridgeBotProtocol(irc.IRCClient):
 class BridgeBotFactory(protocol.ClientFactory):
     protocol = BridgeBotProtocol
 
-    def __init__(self, channel, nickname='dev_omgb'):
+    def __init__(self, channel, nickname='omeglebot'):
         self.channel = channel
         self.nickname = nickname
 
