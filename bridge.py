@@ -34,6 +34,7 @@ class BridgeBotProtocol(irc.IRCClient):
     #   omegle_bot
 
     idle = False  # hack to force idle on init connect
+    piping_to = None
 
     @command
     def connect(self, *args):
@@ -69,6 +70,9 @@ class BridgeBotProtocol(irc.IRCClient):
         else
             self.say(self.factory.channel, 'Usage: /pipe <nick>')
 
+    @command
+    def unpipe(self, *args):
+        self.piping_to = None
 
     def goIdle(self):
         if not self.idle:
