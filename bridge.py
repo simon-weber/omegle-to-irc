@@ -64,10 +64,10 @@ class BridgeBotProtocol(irc.IRCClient):
 
     @command
     def pipe(self, *args):
-        if len(args) > 0
+        if len(args) > 0:
             self.piping_to = args[0]
             print "Piping to %s." % self.piping_to
-        else
+        else:
             self.say(self.factory.channel, 'Usage: /pipe <nick>')
 
     @command
@@ -99,7 +99,7 @@ class BridgeBotProtocol(irc.IRCClient):
             if self.piping_to:
                 to = self.nickname
                 msg_rest = msg.strip()
-            else
+            else:
                 to, msg_rest = [s.strip() for s in msg.split(':')]
         except ValueError:
             return  # no colon
