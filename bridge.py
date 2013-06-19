@@ -61,6 +61,15 @@ class BridgeBotProtocol(irc.IRCClient):
     def captcha(self, *args):
         self.omegle_bot.solveCaptcha(' '.join(args))
 
+    @command
+    def pipe(self, *args):
+        if len(args) > 0
+            self.piping_to = args[0]
+            print "Piping to %s." % self.piping_to
+        else
+            self.say(self.factory.channel, 'Usage: /pipe <nick>')
+
+
     def goIdle(self):
         if not self.idle:
             self.idle = True
@@ -83,7 +92,11 @@ class BridgeBotProtocol(irc.IRCClient):
 
     def privmsg(self, user, channel, msg):
         try:
-            to, msg_rest = [s.strip() for s in msg.split(':')]
+            if self.piping_to:
+                to = self.nickname
+                msg_rest = msg.strip()
+            else
+                to, msg_rest = [s.strip() for s in msg.split(':')]
         except ValueError:
             return  # no colon
         else:
@@ -117,7 +130,10 @@ class BridgeBotProtocol(irc.IRCClient):
 
     @trace
     def messageCallback(self, *args):
-        self.say(self.factory.channel, args[1][0].encode('utf-8'))
+        msg = args[1][0].encode('utf-8')
+        if self.piping_to:
+            msg = self.piping_to + ': ' + msg
+        self.say(self.factory.channel, msg)
 
     @trace
     def recaptchaFailedCallback(self, *args):
